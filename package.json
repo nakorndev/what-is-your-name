@@ -1,0 +1,22 @@
+{
+  "name": "what-is-your-name",
+  "version": "1.0.0",
+  "description": "Project training for Git contribute",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nakorndev/what-is-your-name.git"
+  },
+  "author": "nakorndev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nakorndev/what-is-your-name/issues"
+  },
+  "homepage": "https://github.com/nakorndev/what-is-your-name#readme",
+  "dependencies": {
+    "yaml": "^1.10.0"
+  }
+}
