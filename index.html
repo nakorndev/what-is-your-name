@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ชื่อของคุณคือ</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11/dist/vue.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@0.19.2/dist/axios.min.js"></script>
+  <script src="https://code.iconify.design/1/1.0.6/iconify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash.shuffle@4.2.0/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash.find@4.6.0/index.js"></script>
+  <style>
+    .avatar {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+    }
+    hr {
+      margin: 0.5rem;
+    }
+    .iconify {
+      margin-right: 0.3rem;
+    }
+    .text-align-center {
+      display: flex;
+      align-items: center;
+    }
+    #app {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    #wrapper {
+      flex: 1
+    }
+    [v-cloak] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <section v-if="isLoading" class="hero is-fullheight">
+      <main class="hero-body">
+        <div class="container">
+          <div class="columns">
+            <div class="column is-4 is-offset-4">
+              <progress v-if="!errorMessage" class="progress is-link" max="100"></progress>
+              <div v-else class="message is-danger" v-cloak>
+                <div class="message-body">
+                  Error: {{ errorMessage }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </section>
+    <div id="wrapper" v-else>
+      <nav class="navbar is-spaced">
+        <div class="container">
+          <div class="navbar-brand">
+            <a href="/" class="navbar-item">
+              <b>ชื่อของคุณคือ ?</b>
+            </a>
+          </div>
+          <div class="navbar-start">
+            <a href="https://github.com/nakorndev/what-is-your-name" class="navbar-item">
+              <span class="iconify" data-icon="logos:github-icon" data-inline="false"></span>
+              <span>GitHub</span>
+            </a>
+            <a href="https://nakorn.dev/" class="navbar-item">
+              <span class="iconify" data-icon="twemoji:link" data-inline="false"></span>
+              <span>nakorn.dev</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+      <section class="section">
+        <div class="container">
+          <div class="columns">
+            <div class="column is-4 is-offset-4">
+              <div class="field">
+                <input v-model="search" type="text" class="input" placeholder="พิมพ์เพื่อค้นหาชื่อของคุณ">
+              </div>
+              <div class="message is-info">
+                <p class="message-body"><b>หมายเหตุ:</b> รายการชื่อจะถูกสุ่มทุกครั้งที่มีการเปิดเว็บ และการอัปเดตหลัง Pull Request อาจจะใช้เวลาสักพัก</p>
+              </div>
+            </div>
+          </div>
+          <div class="columns is-multiline">
+            <div v-for="profile of findProfiles" class="column is-3">
+              <div class="box">
+                <div class="media">
+                  <div class="media-left">
+                    <img class="avatar" :src="`https://avatars.dicebear.com/api/male/${profile.name}.svg`" :alt="profile.name">
+                  </div>
+                  <div class="media-content">
+                    <p>
+                      <b>{{ profile.name }}</b>
+                    </p>
+                    <small>{{ profile.subtitle }}</small>
+                    <hr>
+                    <p class="text-align-center">
+                      <span v-if="profile.gender === 'male'" class="iconify" data-icon="twemoji:male-sign" data-inline="false"></span>
+                      <span v-else-if="profile.gender === 'female'" class="iconify" data-icon="twemoji:female-sign" data-inline="false"></span>
+                      <span v-else class="iconify" data-icon="emojione-v1:black-large-square" data-inline="false"></span>
+                      <span>เพศ{{ getGender(profile.gender) }}</span>
+                    </p>
+                    <p class="text-align-center">
+                      <span class="iconify" data-icon="emojione:birthday-cake" data-inline="false"></span>
+                      <span>เกิดปี พ.ศ. {{ profile.birth_year }}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <footer class="footer">
+      <div class="has-text-centered">
+        เว็บไซต์โดย <a href="https://nakorn.dev/">nakorn.dev</a>, หน้าเว็บไซต์นี้เป็นส่วนหนึ่งของคอร์สเรียนเพื่อการเรียนรู้กับการใช้งาน Git
+      </div>
+    </footer>
+  </div>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        profiles: [],
+        isLoading: true,
+        errorMessage: '',
+        search: ''
+      },
+      async mounted () {
+        try {
+          const { data } = await axios.get('https://raw.githubusercontent.com/nakorndev/what-is-your-name/gh-pages/profiles.json')
+          this.profiles = shuffle(data)
+          this.isLoading = false
+        } catch (error) {
+          this.errorMessage = error.message
+        }
+      },
+      computed: {
+        findProfiles () {
+          if (!this.search) return this.profiles
+          for (const profile of this.profiles) {
+            if (profile.name.includes(this.search)) return [ profile ]
+          }
+          return []
+        }
+      },
+      methods: {
+        getGender (gender) {
+          if (gender === 'male') return 'ชาย'
+          if (gender === 'female') return 'หญิง'
+          else return 'ไม่ระบุ'
+        }
+      }
+    })
+  </script>
+</body>
+</html>
